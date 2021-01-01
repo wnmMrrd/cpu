@@ -7,7 +7,7 @@
 `define WriteDisable 1'b0
 `define ReadEnable 1'b1
 `define ReadDisable 1'b0
-`define AluOpBus 7:0
+`define AluOpBus 4:0
 `define AluSelBus 2:0
 `define InstValid 1'b0
 `define InstInvalid 1'b1
@@ -152,14 +152,19 @@
 `define InstMemNum 131071
 `define InstMemNumLog2 17
 
-`define NoStall 4'b0000
-`define IfStall 4'b00011
-`define IdStall 4'b00111
-`define MemStall 4'b11111
+`define NoStall 5'b00000
+`define IfStall 5'b00011
+`define IdStall 5'b00111
+`define MemStall 5'b11111
 `define AllStall 5'b11111
 `define StallBus 4:0
 
 `define RamBus 7:0
+`define MemBus 31:0
+`define Write 2'b01
+`define Read 2'b00
+`define Free 2'b10
+`define IF 2'b11
 
 `define RegAddrBus 4:0
 `define RegBus 31:0
