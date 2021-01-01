@@ -14,11 +14,11 @@ module id_ex(
 
     input wire jump_flag,
     input wire[`InstAddrBus] id_pc,
-    input wire[`InstAddrBus] ex_pc,
+    output reg[`InstAddrBus] ex_pc,
 
     input wire[`StallBus] stall_state,
 
-    output reg[`AluOpBus] ex_aloup,
+    output reg[`AluOpBus] ex_aluop,
     output reg[`AluSelBus] ex_alusel,
     output reg[`RegBus] ex_reg1,
     output reg[`RegBus] ex_reg2,
@@ -36,8 +36,8 @@ module id_ex(
             ex_reg2 <= `ZeroWord;
             ex_imm <= `ZeroWord;
             ex_wd <= `NOPRegAddr;
-            ex_wreg <= `WriteDisbale;
-        end else if(stall_bus[3] == `True_v) begin
+            ex_wreg <= `WriteDisable;
+        end else if(stall_state[3] == `True_v) begin
 
         end else if(stall_state[2] == `True_v || jump_flag) begin
             ex_pc <= `ZeroWord;
@@ -47,7 +47,7 @@ module id_ex(
             ex_reg2 <= `ZeroWord;
             ex_imm <= `ZeroWord;
             ex_wd <= `NOPRegAddr;
-            ex_wreg <= `WriteDisbale;
+            ex_wreg <= `WriteDisable;
         end else begin
             ex_pc <= id_pc;
             ex_aluop <= id_aluop;
