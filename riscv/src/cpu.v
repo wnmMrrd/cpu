@@ -198,7 +198,7 @@ module cpu(
   );
 
   mem_ctrl mem_ctrl0(
-    .clk(clk_in), .rst(rst),
+    .clk(clk_in), .rst(rst), .io_buffer_full(io_buffer_full),
     .inst_req_i(inst_req_i), .inst_addr_i(inst_addr_i), .inst_o(inst_o), .inst_addr_o(inst_addr_o), .inst_done_o(inst_done_o),
     .ram_r_req(ram_r_req), .ram_w_req(ram_w_req), .ram_addr(ram_addr), .ram_r_data(ram_r_data), .ram_w_data(ram_w_data), .buffer_pointer_i(buffer_pointer_i), .ram_done(ram_done),
     .mem_din(mem_din), .mem_dout(mem_dout), .mem_a(mem_a), .mem_wr(mem_wr)
