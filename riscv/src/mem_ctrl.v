@@ -3,6 +3,7 @@
 module mem_ctrl(
 	input wire clk,
 	input wire rst,
+	input wire io_buffer_full,
 
 	input wire inst_req_i,
 	input wire[`InstAddrBus] inst_addr_i,
@@ -27,6 +28,7 @@ module mem_ctrl(
 	reg[2:0] buffer_pointer;
 	reg[1:0] ram_state;
 	reg[31:0] ram_pos;
+	reg last_is_write;
 
 	always @ (posedge clk) begin
 		if(rst == `RstEnable) begin
@@ -41,27 +43,35 @@ module mem_ctrl(
 			buffer_pointer <= 3'h0;
 			ram_state <= `Free;
 			ram_pos <= `ZeroWord;
+			last_is_write <= `False_v;
 		end else if(ram_state == `Free) begin
 			inst_done_o <= `False_v;
 			ram_done <= `False_v;
 			mem_wr <= `Read;
 			if(ram_r_req == `True_v) begin
+				last_is_write <= `False_v;
 				buffer_pointer <= 3'h0;
 				ram_state <= `Read;
 			end else if(ram_w_req == `True_v) begin
 				mem_a <= `ZeroWord;
-				if(ram_addr[17:16] != 2'b11)
-					buffer_pointer <= buffer_pointer_i;
-				else
-					buffer_pointer <= 3'h3;
-				ram_state <= `Write;
+				if(last_is_write == `True_v) begin
+					last_is_write <= `False_v;
+				end else begin
+					if(ram_addr[17:16] != 2'b11)
+						buffer_pointer <= buffer_pointer_i;
+					else
+						buffer_pointer <= 3'h3;
+					ram_state <= `Write;
+				end
 			end else if(inst_req_i) begin
+				last_is_write <= `False_v;
 				mem_a <= inst_addr_i;
 				buffer_pointer <= 3'h0;
 				ram_state <= `IF;
 				ram_pos <= inst_addr_i;
 			end
 		end else if(ram_state == `Read && ram_r_req == `True_v) begin
+			last_is_write <= `False_v;
 			inst_done_o = `False_v;
 			ram_done <= `False_v;
 			case(buffer_pointer)
@@ -99,37 +109,42 @@ module mem_ctrl(
 				end
 			endcase
 		end else if(ram_state == `Write && ram_w_req == `True_v) begin
+			last_is_write <= `False_v;
 			inst_done_o = `False_v;
 			ram_done <= `False_v;
-			case(buffer_pointer)
-				3'h0:begin
-					mem_dout <= ram_w_data[31:24];
-					mem_a <= ram_addr+3;
-					mem_wr <= `Write;
-					buffer_pointer <= 3'h1;
-				end
-				3'h1:begin
-					mem_dout <= ram_w_data[23:16];
-					mem_a <= ram_addr+2;
-					mem_wr <= `Write;
-					buffer_pointer <= 3'h2;
-				end
-				3'h2:begin
-					mem_dout <= ram_w_data[15:8];
-					mem_a <= ram_addr+1;
-					mem_wr <= `Write;
-					buffer_pointer <= 3'h3;
-				end
-				3'h3:begin
-					mem_dout <= ram_w_data[7:0];
-					mem_a <= ram_addr;
-					mem_wr <= `Write;
-					ram_done <= `True_v;
-					buffer_pointer <= 3'h0;
-					ram_state <= `Free;
-				end
-			endcase
+			if(io_buffer_full != 1'b1) begin
+				case(buffer_pointer)
+					3'h0:begin
+						mem_dout <= ram_w_data[31:24];
+						mem_a <= ram_addr+3;
+						mem_wr <= `Write;
+						buffer_pointer <= 3'h1;
+					end
+					3'h1:begin
+						mem_dout <= ram_w_data[23:16];
+						mem_a <= ram_addr+2;
+						mem_wr <= `Write;
+						buffer_pointer <= 3'h2;
+					end
+					3'h2:begin
+						mem_dout <= ram_w_data[15:8];
+						mem_a <= ram_addr+1;
+						mem_wr <= `Write;
+						buffer_pointer <= 3'h3;
+					end
+					3'h3:begin
+						mem_dout <= ram_w_data[7:0];
+						mem_a <= ram_addr;
+						mem_wr <= `Write;
+						ram_done <= `True_v;
+						buffer_pointer <= 3'h0;
+						ram_state <= `Free;
+						last_is_write <= `True_v;
+					end
+				endcase
+			end
 		end else if(ram_state == `IF && inst_req_i == `True_v) begin
+			last_is_write <= `False_v;
 			inst_done_o = `False_v;
 			ram_done <= `False_v;
 			if(inst_addr_i != ram_pos) begin
@@ -170,6 +185,7 @@ module mem_ctrl(
 				endcase
 			end
 		end else begin
+			last_is_write <= `False_v;
 			inst_done_o = `False_v;
 			ram_done <= `False_v;
 			mem_wr <= `Read;
