@@ -14,8 +14,8 @@ module ex(
 
     output reg[`AluOpBus] aluop_o,
     output reg[`MemBus] addr_o,
-    output reg[`RegAddrBus] wd_o,
-    output reg wreg_o,
+    output wire[`RegAddrBus] wd_o,
+    output wire wreg_o,
     output reg[`RegBus] wdata_o,
 
     output reg jump_flag,
@@ -28,10 +28,11 @@ module ex(
     reg[`RegBus] shiftout;
     wire[`InstAddrBus] jalr_to = reg1_i+imm_i;
 
+    assign wd_o = wd_i;
+    assign wreg_o = (wd_i&&wreg_i) ? 1'b1:1'b0;
+
     always @ (*) begin
         if(rst != `RstEnable) begin
-            wd_o = wd_i;
-            wreg_o = (wd_i&&wreg_i) ? 1'b1:1'b0;
             case(aluop_i)
                 `EX_JAL:begin
                     jump_flag = `True_v;
